@@ -1,3 +1,0 @@
-Holi
-
-yummy yummy
