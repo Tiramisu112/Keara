@@ -6,6 +6,10 @@ flags = ['SF','S0','S1','S2','S3','OTH','REJ','RSTO',
 
 data_f = []
 
+# Range for scaling of parameters
+a = 0.1
+b = 0.99
+
 
 def read_file(data_path):
     data = []
@@ -73,8 +77,6 @@ def get_true_values(data):
 
 
 def norma(f_vector):
-    a = 0.1
-    b = 0.99
     x_max = max(f_vector)
     x_min = min(f_vector)
 

@@ -26,8 +26,8 @@ def B_vector(H, T_vector, N_h, C):
 
 
 # Calculate MSE
-def mse(T_vector, y_vector, N):
-    return np.square(T_vector - y_vector).mean()/N
+def mse(T_vector, y_vector):
+    return np.square(T_vector - y_vector).mean()
 
 
 # Get the h_j vector values of hidden nodes
@@ -49,3 +49,13 @@ def get_H(train_data, w_matrix):
 # Predict whether attack or not for a given features vector
 def predict(x_vector, w_matrix, B):
     return np.dot(B, get_h_j(x_vector, w_matrix))
+
+
+# Test ann for QPSO
+def test_ann(weight_matrix, train_data, y_true_train, C):
+    H = get_H(train_data, weight_matrix)
+    B = B_vector(H, y_true_train, len(weight_matrix[0, :]), C)
+
+    y_vector = y_out(B, H)
+
+    return mse(y_true_train, y_vector)
