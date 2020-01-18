@@ -2,24 +2,21 @@ import numpy as np
 import random
 from modules import ann
 
-a = 0.2
-b = 0.95
-initial_fitness = -100000
 
 class Swarm:
-    def __init__(self, Np, MaxIter, N, input_nodes, hidden_nodes, train_data, y_true_train, C):
-        self.X = []
+    def __init__(self, Np, maxIter, a, b, input_nodes, hidden_nodes, train_data, y_true_train, C):
         self.Np = Np
         self.D = input_nodes * hidden_nodes
-        self.p = []
-        self.pg = []
-        self.MaxIter = MaxIter
+        self.error_pbest = np.full(Np, np.inf)
+        self.error_gbest = np.inf
+        self.pbest = []
+        self.gbest = []
+        self.maxIter = maxIter
         self.iteration = 0
-        self.a = -1
-        self.phi = -1
-        self.mu = -1
+        self.alpha = -1
         self.mBest = []
-        self.N = N
+        self.a = a
+        self.b = b
 
         self.input_nodes = input_nodes
         self.hidden_nodes = hidden_nodes
@@ -28,55 +25,56 @@ class Swarm:
         self.C = C
 
     def init_swarm(self):
-        for i in range(self.D):
-            self.X.append([])
-            self.p.append([])
-            for j in range(self.Np):
-                aux = random.random()
-                self.X[-1].append(aux)
-                self.p[-1].append(aux)
+        X = np.random.random((self.Np, self.D))
+        self.pbest = X.copy()
 
-            self.pg.append(initial_fitness)
-
-        self.phi = random.random()
-        self.mu = random.random()
-
-        while self.iteration < self.MaxIter:
-            self.iteration += 1
+        while self.iteration < self.maxIter:
             self.mbest()
-            self.alpha()
+            self.calculate_alpha()
 
-            self.local_atractor()
+            for i in range(self.Np):
+                actual_error = self.test(X[i, :])
+                #print(str(actual_error))
 
-            for i in range(self.D):
-                for j in range(self.Np):
-                    self.new_swarm()
-                self.test()
+                if actual_error < self.error_pbest[i]:
+                    self.pbest[i, :] = X[i, :]
+                    self.error_pbest[i] = actual_error
 
-    def new_x(self, i, j):
-        if random.random() > 0.5:
-            self.X[i][j] = self.p[i][j] + self.a * abs(self.mbest[j] - self.X[i][j]) * np.log(1/self.mu)
-        else:
-            self.X[i][j] = self.p[i][j] - self.a * abs(self.mbest[j] - self.X[i][j]) * np.log(1 / self.mu)
+                if actual_error < self.error_gbest:
+                    self.gbest = X[i, :]
+                    self.error_gbest = actual_error
 
-    def new_swarm(self):
-        for i in range(self.Np):
-            for j in range(self.D):
-                self.new_x(i, j)
+                for j in range(self.D):
+                    phi = random.random()
+                    p = self.local_atractor(phi, i, j)
+                    mu = random.random()
 
-    def local_atractor(self):
-        for i in range(self.Np):
-            for j in range(self.D):
-                self.p[i][j] = self.phi * self.p[i][j] + (1 - self.phi) * self.pg[j]
+                    if random.random() > 0.5:
+                        X[i, j] = p + self.alpha * abs(self.mBest[j] - X[i, j]) * np.log(1 / mu)
+                    else:
+                        X[i, j] = p - self.alpha * abs(self.mBest[j] - X[i, j]) * np.log(1 / mu)
+
+            self.iteration += 1
+            print()
+            print('Iteration: ' + str(self.iteration))
+            print('MSE: ' + str(self.error_gbest))
+            print()
+            print('---------------------------------')
+
+    def local_atractor(self, phi, i, j):
+        return phi * self.pbest[i, j] + (1 - phi) * self.gbest[j]
 
     def mbest(self):
         self.mBest = []
         for j in range(self.D):
-            self.mBest.append((1 / self.Np) * np.sum(self.p[:][j]))
+            self.mBest.append(np.sum(self.pbest[:, j]) / self.Np)
 
-    def alpha(self):
-        self.a = (b - a) * ((self.MaxIter - self.iteration) / self.MaxIter) + a
+    def calculate_alpha(self):
+        self.alpha = (self.b - self.a) * ((self.maxIter - self.iteration) / self.maxIter) + self.a
 
-    def test(self):
-        weight_matrix = np.reshape(self.pg, self.input_nodes, self.hidden_nodes)
-        return ann.test_ann(weight_matrix, self.train_data, self.y_true_data, self.C)
+    def test(self, weights_matrix):
+        weights_matrix = weights_matrix.reshape(self.input_nodes, self.hidden_nodes)
+        return ann.test_mse(weights_matrix, self.train_data, self.y_true_train, self.C)
+
+    def get_gbest_weights(self):
+        return self.gbest.reshape(self.input_nodes, self.hidden_nodes)

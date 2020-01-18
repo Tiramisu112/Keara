@@ -1,4 +1,5 @@
 from sklearn.metrics import confusion_matrix
+import sklearn.metrics as metrics
 
 
 def precision(tp, fp):
@@ -29,3 +30,11 @@ def get_metrics(tp, tn, fp, fn):
 def get_values(y_true, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
     return tp, tn, fp, fn
+
+
+def get_confusion_matrix(y_true, y_pred):
+    return confusion_matrix(y_true, y_pred)
+
+
+def get_report(y_true, y_pred):
+    return metrics.classification_report(y_true, y_pred)

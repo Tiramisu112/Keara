@@ -1,8 +1,9 @@
 import random
+import numpy as np
 
-protocol = ['tcp','udp','icmp']
-flags = ['SF','S0','S1','S2','S3','OTH','REJ','RSTO',
-         'RSTOS0','SH','RSTR','SHR']
+protocol = ['tcp', 'udp', 'icmp']
+flags = ['SF', 'S0', 'S1', 'S2', 'S3', 'OTH', 'REJ', 'RSTO',
+         'RSTOS0', 'SH', 'RSTR', 'SHR']
 
 data_f = []
 
@@ -68,12 +69,9 @@ def balance_data(data, n1, n2, R):
     return data_new
 
 
-def get_true_values(data):
-    y_true = []
-    for x in data:
-        y_true.append(x[41])
-
-    return y_true
+def separate_data(data):
+    data = np.array(data)
+    return data[:, 0:41], data[:, 41]
 
 
 def norma(f_vector):
@@ -120,10 +118,22 @@ def pre_process_data(data_path, N):
     # Shuffle new training dataset
     random.shuffle(data_balanced)
 
-    # Obtain true values
-    y_true = get_true_values(data_balanced)
+    # Separate data from labels
+    data_balanced, y_true = separate_data(data_balanced)
 
     # Feature scaling
     data_normalised = scale_features(data_balanced)
 
     return data_normalised, y_true
+
+
+def numericalise_data_x(data):
+
+    # Transform nonnumerical features to numerical
+    data[1] = str(protocol.index(data[1]) + 1)
+    data[3] = str(flags.index(data[3]) + 1)
+
+    data[2] = '0'
+
+    data = list(map(float, data))
+    return data
