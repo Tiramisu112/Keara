@@ -39,8 +39,8 @@ B = ann.B_vector(ann.get_H(train_data, weights), y_true_train, hidden_nodes, C)
 
 
 x = '-1'
-while x not in 'exit':
-    if x not in 'exit':
+while x != 'exit':
+    if x != 'exit':
         x = str(input('Ingrese datos a predecir: (ingrese exit para salir)'))
         x = x.strip().split(',')
 
